@@ -1,4 +1,29 @@
 {
-  "redirects": [{ "source": "/", "destination": "/api" }],
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python-3.9"
+      }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/static/(.*)",
+      "destination": "/_build/static/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/_build/index.html"
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
   "devCommand": "uvicorn api.main:app --host 0.0.0.0 --port 8000"
 }
