@@ -1,9 +1,10 @@
 {
     "devCommand": "uvicorn main:app --host 0.0.0.0 --port 8000",
     "builds": [
-      {
-        "src": "api/index.py",
-        "use": "@vercel/python"
+     "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python-3.9"  
       }
     ],
     "routes": [
