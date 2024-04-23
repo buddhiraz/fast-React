@@ -17,10 +17,10 @@ app.add_middleware(
 # Frontend URL
 @app.get("/")
 def index():
-    return FileResponse("frontend/build/index.html")
+    return FileResponse("build/index.html")
 
 @app.exception_handler(404)
 async def exception_404_handler(request, exc):
-    return FileResponse("frontend/build/index.html")
+    return FileResponse("build/index.html")
 
-app.mount("/", StaticFiles(directory="frontend/build/"), name="ui")
+app.mount("/", StaticFiles(directory="build/"), name="ui")
