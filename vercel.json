@@ -5,15 +5,22 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build"
+        "distDir": "frontend/build"
       }
+    },
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
+      "src": "^/api/(.*)",
+      "dest": "main.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/build/index.html"
     }
-  ],
-  "devCommand": "uvicorn main:app --host 0.0.0.0 --port 8000"
+  ]
 }
