@@ -1,23 +1,25 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "main.py",
-      "use": "@vercel/python",
-      "config": {
-        "runtime": "python-3.8"
+    "version": 2,
+    "builds": [
+      {
+        "src": "main.py",
+        "use": "@vercel/python",
+        "config": {
+          "runtime": "python-3.8"
+        }
       }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "main.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/build/index.html"
-    }
-  ],
-  "cleanUrls": true
-}
+    ],
+    "routes": [
+      {
+        "src": "/api/(.*)",
+        "dest": "main.py"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "/build/index.html"
+      }
+    ],
+    "cleanUrls": true,
+    "devCommand": "gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"
+  }
+  
