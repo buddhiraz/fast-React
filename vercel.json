@@ -1,5 +1,5 @@
 {
-    "devCommand": "uvicorn main:app --host 0.0.0.0 --port 8000",
+  "version": 2,
   "builds": [
     {
       "src": "api/index.py",
@@ -9,10 +9,23 @@
       }
     }
   ],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "api/index.py"
-      }
-    ]
-  }
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/_build/index.html"
+    }
+  ],
+  "rewrites": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/_build/static/$1"
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "devCommand": "uvicorn api.main:app --host 0.0.0.0 --port 8000"
+}
