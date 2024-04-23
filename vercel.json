@@ -1,15 +1,23 @@
 {
-  "devCommand": "uvicorn main:app --host 0.0.0.0 --port 8000",
+  "version": 2,
   "builds": [
     {
       "src": "main.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python-3.8"
+      }
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/build/index.html"
     }
-  ]
+  ],
+  "cleanUrls": true
 }
