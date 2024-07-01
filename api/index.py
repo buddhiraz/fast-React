@@ -11,6 +11,13 @@ import logging
 
 app = FastAPI()
 
+# Configure logging
+logging.basicConfig(
+    filename="webhook_events.log",
+    level=logging.INFO,
+    format="%(asctime)s %(message)s"
+)
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -121,6 +128,21 @@ async def webhook_listener(request: Request):
     payload = await request.json()
     log_event(payload)
     return JSONResponse({"status": "success"})
+
+@app.get("/api/view-log")
+async def view_log():
+    """
+    Serve the log file containing the webhook event data.
+
+    Returns:
+        FileResponse: The log file if it exists.
+        PlainTextResponse: A 404 response if the log file is not found.
+    """
+    log_file_path = "webhook_events.log"
+    if os.path.exists(log_file_path):
+        return FileResponse(log_file_path, media_type='text/plain', filename="webhook_events.log")
+    else:
+        return PlainTextResponse("Log file not found", status_code=404)
 
 def save_to_csv(url, org_connection_id):
     """
