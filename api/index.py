@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import FileResponse, JSONResponse, PlainTextResponse
+from starlette.responses import JSONResponse, PlainTextResponse, FileResponse
 from starlette.staticfiles import StaticFiles
 import requests
 import uvicorn
@@ -8,17 +8,14 @@ import pandas as pd
 from datetime import datetime
 import os
 import logging
+from io import StringIO
 
 app = FastAPI()
 
-# Configure logging
-log_file_path = "webhook_events.log"
-if not os.path.exists(log_file_path):
-    with open(log_file_path, 'w') as log_file:
-        log_file.write("timestamp,event_id,event_type,org_connection_id,download_link\n")
-
+# Configure in-memory logging
+log_stream = StringIO()
 logging.basicConfig(
-    filename=log_file_path,
+    stream=log_stream,
     level=logging.INFO,
     format="%(asctime)s %(message)s"
 )
@@ -122,7 +119,7 @@ async def view_csv():
 @app.post("/api/webhook")
 async def webhook_listener(request: Request):
     """
-    Listen for webhook events and log them to a logfile.
+    Listen for webhook events and log them to an in-memory log.
 
     Args:
         request (Request): The incoming request containing the webhook payload.
@@ -138,16 +135,14 @@ async def webhook_listener(request: Request):
 @app.get("/api/view-log")
 async def view_log():
     """
-    Serve the log file containing the webhook event data.
+    Serve the in-memory log containing the webhook event data.
 
     Returns:
-        FileResponse: The log file if it exists.
-        PlainTextResponse: A 404 response if the log file is not found.
+        PlainTextResponse: The in-memory log content.
     """
-    if os.path.exists(log_file_path):
-        return FileResponse(log_file_path, media_type='text/plain', filename="webhook_events.log")
-    else:
-        return PlainTextResponse("Log file not found", status_code=404)
+    log_stream.seek(0)  # Reset the StringIO cursor to the beginning
+    log_content = log_stream.read()
+    return PlainTextResponse(log_content)
 
 def save_to_csv(url, org_connection_id):
     """
@@ -172,7 +167,7 @@ def save_to_csv(url, org_connection_id):
 
 def log_event(payload):
     """
-    Log the webhook event to a logfile.
+    Log the webhook event to the in-memory log.
 
     Args:
         payload (dict): The webhook payload.
