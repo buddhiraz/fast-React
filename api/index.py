@@ -12,8 +12,13 @@ import logging
 app = FastAPI()
 
 # Configure logging
+log_file_path = "webhook_events.log"
+if not os.path.exists(log_file_path):
+    with open(log_file_path, 'w') as log_file:
+        log_file.write("timestamp,event_id,event_type,org_connection_id,download_link\n")
+
 logging.basicConfig(
-    filename="webhook_events.log",
+    filename=log_file_path,
     level=logging.INFO,
     format="%(asctime)s %(message)s"
 )
@@ -126,6 +131,7 @@ async def webhook_listener(request: Request):
         JSONResponse: A success response.
     """
     payload = await request.json()
+    print("Webhook received")
     log_event(payload)
     return JSONResponse({"status": "success"})
 
@@ -138,7 +144,6 @@ async def view_log():
         FileResponse: The log file if it exists.
         PlainTextResponse: A 404 response if the log file is not found.
     """
-    log_file_path = "webhook_events.log"
     if os.path.exists(log_file_path):
         return FileResponse(log_file_path, media_type='text/plain', filename="webhook_events.log")
     else:
