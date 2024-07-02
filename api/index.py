@@ -204,6 +204,33 @@ async def authenticate(request: Request):
         raise HTTPException(status_code=response.status_code, detail="Error with Fasten Connect API")
     return JSONResponse(content=response.json())
 
+@app.post("/api/get-patient-docs")
+async def get_patient_docs(request: Request):
+    """
+    Get patient documents from the provided download link.
+
+    Args:
+        request (Request): The incoming request with the download link in the body.
+
+    Returns:
+        JSONResponse: The response containing patient documents.
+    """
+    body = await request.json()
+    download_link = body.get("download_link")
+    if not download_link:
+        raise HTTPException(status_code=400, detail="Download link is required")
+
+    headers = {
+        "Authorization": "Basic cHVibGljX3Rlc3RfN2Eyc3Zya3pia3l1cjRjNmplMXV3NzU0bmF6M3dneGJoNHplbGJtdTI3aHJrOnByaXZhdGVfdGVzdF9yMig3amh9aVN6NnlqcCYpb3ppciUqVnJNS0Z8P2FCKkl2IVFUZUZHVHpSamE=",
+        "content-type": "application/json"
+    }
+
+    response = requests.get(download_link, headers=headers)
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail="Error fetching patient docs")
+    return JSONResponse(content=response.json())
+
+
 @app.get("/api/view-csv")
 async def view_csv():
     """
