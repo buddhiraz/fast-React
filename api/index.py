@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse, FileResponse, PlainTextResponse, Response
 from starlette.staticfiles import StaticFiles
@@ -110,6 +110,34 @@ def save_to_csv(file_path, data):
     else:
         df.to_csv(file_path, index=False)
 
+websocket_clients = []
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint to handle real-time notifications to the frontend.
+
+    Args:
+        websocket (WebSocket): The WebSocket connection.
+    """
+    await websocket.accept()
+    websocket_clients.append(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        websocket_clients.remove(websocket)
+
+async def notify_clients(message):
+    """
+    Notify all connected WebSocket clients with the message.
+
+    Args:
+        message (str): The message to send to the clients.
+    """
+    for client in websocket_clients:
+        await client.send_text(message)
+
 @app.post("/api/webhook")
 async def webhook_listener(request: Request):
     """
@@ -138,6 +166,9 @@ async def webhook_listener(request: Request):
     # Save to CSV
     webhook_csv_path = "/tmp/webhook_events.csv"
     save_to_csv(webhook_csv_path, [event_data])
+
+    # Notify WebSocket clients
+    await notify_clients(f"Webhook received: {url}")
 
     return {"status": "success"}
 
@@ -229,7 +260,6 @@ async def get_patient_docs(request: Request):
     if response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail="Error fetching patient docs")
     return JSONResponse(content=response.json())
-
 
 @app.get("/api/view-csv")
 async def view_csv():
