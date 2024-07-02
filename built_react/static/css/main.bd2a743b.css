@@ -1,0 +1,77 @@
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, Courier New, monospace
+}
+
+body {
+    background: linear-gradient(90deg, #00c6ff, #0072ff);
+    color: #fff;
+    font-family: Arial, sans-serif;
+    margin: 0
+}
+
+.App {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+    /* text-align: center */
+}
+
+.App-header {
+    font-family: Arial, sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 20px
+}
+
+.centered-container {
+    align-items: center;
+    display: flex;
+    height: 50vh;
+    justify-content: center
+}
+
+button {
+    background-color: gray;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: not-allowed;
+    margin-top: 20px;
+    padding: 10px 20px
+}
+
+button.active {
+    background-color: green;
+    cursor: pointer
+}
+
+.green-box,
+.resizable-container {
+    word-wrap: break-word;
+    background-color: #90ee90;
+    border-radius: 5px;
+    margin-top: 20px;
+    max-width: 80%;
+    padding: 20px
+}
+
+.resizable-container {
+    max-height: 400px;
+    overflow-y: scroll;
+    position: relative
+}
+
+.download-button {
+    position: absolute;
+    right: 10px;
+    top: 10px
+}
+
+/*# sourceMappingURL=main.bd2a743b.css.map*/

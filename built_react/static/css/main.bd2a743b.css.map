@@ -1,0 +1,15 @@
+{
+    "version": 3,
+    "file": "static/css/main.bd2a743b.css",
+    "mappings": "AAAA,KAKE,kCAAmC,CACnC,iCAAkC,CAJlC,mIAKF,CAEA,KACE,uEAEF,CCZA,KAGE,iDAAuD,CACvD,UAAY,CAFZ,4BAA8B,CAD9B,QAIF,CAEA,KAKE,kBAAmB,CAFnB,YAAa,CACb,qBAAsB,CAEtB,sBAAuB,CAJvB,gBAAiB,CADjB,iBAMF,CAEA,YACE,4BAAgC,CAChC,gBAAiB,CACjB,kBACF,CAEA,oBAGE,kBAAmB,CAFnB,YAAa,CAGb,WAAY,CAFZ,sBAGF,CAEA,OACE,qBAAsB,CAGtB,WAAY,CACZ,iBAAkB,CAHlB,UAAY,CAIZ,kBAAmB,CACnB,eAAgB,CAJhB,iBAKF,CAEA,cACE,sBAAuB,CACvB,cACF,CAWA,gCAHE,oBAAqB,CALrB,wBAA4B,CAG5B,iBAAkB,CADlB,eAAgB,CAEhB,aAAc,CAHd,YAiBF,CAVA,qBAME,gBAAiB,CADjB,iBAAkB,CAElB,iBAGF,CAEA,iBACE,iBAAkB,CAElB,UAAW,CADX,QAEF",
+    "sources": [
+        "index.css",
+        "App.css"
+    ],
+    "sourcesContent": [
+        "body {\n  margin: 0;\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',\n    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',\n    sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n}\n\ncode {\n  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',\n    monospace;\n}\n",
+        "body {\n  margin: 0;\n  font-family: Arial, sans-serif;\n  background: linear-gradient(to right, #00c6ff, #0072ff);\n  color: white;\n}\n\n.App {\n  text-align: center;\n  min-height: 100vh;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n}\n\n.App-header {\n  font-family: 'Arial', sans-serif;\n  font-size: 1.5rem;\n  margin-bottom: 20px;\n}\n\n.centered-container {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  height: 50vh;\n}\n\nbutton {\n  background-color: gray;\n  color: white;\n  padding: 10px 20px;\n  border: none;\n  border-radius: 5px;\n  cursor: not-allowed;\n  margin-top: 20px;\n}\n\nbutton.active {\n  background-color: green;\n  cursor: pointer;\n}\n\n.green-box {\n  background-color: lightgreen;\n  padding: 20px;\n  margin-top: 20px;\n  border-radius: 5px;\n  max-width: 80%;\n  word-wrap: break-word;\n}\n\n.resizable-container {\n  background-color: lightgreen;\n  padding: 20px;\n  margin-top: 20px;\n  border-radius: 5px;\n  overflow-y: scroll;\n  max-height: 400px;\n  position: relative;\n  max-width: 80%;\n  word-wrap: break-word;\n}\n\n.download-button {\n  position: absolute;\n  top: 10px;\n  right: 10px;\n}\n"
+    ],
+    "names": [],
+    "sourceRoot": ""
+}
