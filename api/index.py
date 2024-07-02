@@ -1,21 +1,27 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse, PlainTextResponse, FileResponse
+from starlette.responses import JSONResponse, FileResponse, PlainTextResponse
 from starlette.staticfiles import StaticFiles
-import requests
-import uvicorn
 import pandas as pd
-from datetime import datetime
 import os
 import logging
-from io import StringIO
+from datetime import datetime
+import requests
+import uvicorn
 
 app = FastAPI()
 
-# Configure in-memory logging
-log_stream = StringIO()
+# Configure logging to use an in-memory log
+LOG_FILE_PATH = "/tmp/webhook_events.log"
+
+# Ensure the log file exists
+if not os.path.exists(LOG_FILE_PATH):
+    with open(LOG_FILE_PATH, 'w') as log_file:
+        log_file.write("timestamp,event_id,event_type,org_connection_id,download_link\n")
+
+# Add logging configuration
 logging.basicConfig(
-    stream=log_stream,
+    filename=LOG_FILE_PATH,
     level=logging.INFO,
     format="%(asctime)s %(message)s"
 )
@@ -55,6 +61,91 @@ async def exception_404_handler(request, exc):
         FileResponse: The index.html file from the React build directory.
     """
     return FileResponse("built_react/index.html")
+
+@app.get("/api/view-log")
+def view_log():
+    """
+    View the content of the log file.
+
+    Returns:
+        Response: The content of the log file.
+    """
+    if os.path.exists(LOG_FILE_PATH):
+        with open(LOG_FILE_PATH, 'r') as log_file:
+            log_content = log_file.read()
+        return Response(content=log_content, media_type="text/plain")
+    else:
+        return Response(content="Log file not found.", media_type="text/plain")
+
+@app.get("/api/download-log")
+def download_log():
+    """
+    Download the log file.
+
+    Returns:
+        Response: The log file as an attachment.
+    """
+    if os.path.exists(LOG_FILE_PATH):
+        return Response(
+            content=open(LOG_FILE_PATH, 'rb').read(),
+            media_type='application/octet-stream',
+            headers={
+                'Content-Disposition': f'attachment; filename="webhook_events.log"'
+            }
+        )
+    else:
+        return Response(content="Log file not found.", media_type="text/plain")
+
+def save_to_csv(url, org_connection_id):
+    """
+    Save the URL and org_connection_id to a CSV file.
+
+    Args:
+        url (str): The URL containing the org_connection_id.
+        org_connection_id (str): The organization connection ID.
+    """
+    file_path = "/tmp/org_connection_data.csv"
+    data = {
+        "timestamp": [datetime.now().isoformat()],
+        "url": [url],
+        "org_connection_id": [org_connection_id]
+    }
+    df = pd.DataFrame(data)
+    
+    if os.path.exists(file_path):
+        df.to_csv(file_path, mode='a', header=False, index=False)
+    else:
+        df.to_csv(file_path, index=False)
+
+@app.post("/api/webhook")
+async def webhook_listener(request: Request):
+    """
+    Listen for webhook events and log them to an in-memory log.
+
+    Args:
+        request (Request): The incoming request containing the webhook payload.
+
+    Returns:
+        JSONResponse: A success response.
+    """
+    payload = await request.json()
+    url = payload.get("data", {}).get("download_link")
+    org_connection_id = payload.get("data", {}).get("org_connection_id")
+
+    # Save to CSV
+    save_to_csv(url, org_connection_id)
+
+    # Log the event
+    event_data = {
+        "timestamp": datetime.now().isoformat(),
+        "event_id": payload.get("id"),
+        "event_type": payload.get("type"),
+        "org_connection_id": org_connection_id,
+        "download_link": url
+    }
+    logging.info(event_data)
+
+    return {"status": "success"}
 
 @app.get("/api/your-endpoint")
 async def get_data(org_connection_id: str, request: Request):
@@ -111,75 +202,11 @@ async def view_csv():
         FileResponse: The CSV file if it exists.
         PlainTextResponse: A 404 response if the CSV file is not found.
     """
-    if os.path.exists("org_connection_data.csv"):
-        return FileResponse("org_connection_data.csv", media_type='text/csv', filename="org_connection_data.csv")
+    file_path = "/tmp/org_connection_data.csv"
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type='text/csv', filename="org_connection_data.csv")
     else:
         return PlainTextResponse("CSV file not found", status_code=404)
-
-@app.post("/api/webhook")
-async def webhook_listener(request: Request):
-    """
-    Listen for webhook events and log them to an in-memory log.
-
-    Args:
-        request (Request): The incoming request containing the webhook payload.
-
-    Returns:
-        JSONResponse: A success response.
-    """
-    payload = await request.json()
-    print("Webhook received")
-    log_event(payload)
-    return JSONResponse({"status": "success"})
-
-@app.get("/api/view-log")
-async def view_log():
-    """
-    Serve the in-memory log containing the webhook event data.
-
-    Returns:
-        PlainTextResponse: The in-memory log content.
-    """
-    log_stream.seek(0)  # Reset the StringIO cursor to the beginning
-    log_content = log_stream.read()
-    return PlainTextResponse(log_content)
-
-def save_to_csv(url, org_connection_id):
-    """
-    Save the URL and org_connection_id to a CSV file.
-
-    Args:
-        url (str): The URL containing the org_connection_id.
-        org_connection_id (str): The organization connection ID.
-    """
-    file_path = "org_connection_data.csv"
-    data = {
-        "timestamp": [datetime.now().isoformat()],
-        "url": [url],
-        "org_connection_id": [org_connection_id]
-    }
-    df = pd.DataFrame(data)
-    
-    if os.path.exists(file_path):
-        df.to_csv(file_path, mode='a', header=False, index=False)
-    else:
-        df.to_csv(file_path, index=False)
-
-def log_event(payload):
-    """
-    Log the webhook event to the in-memory log.
-
-    Args:
-        payload (dict): The webhook payload.
-    """
-    event_data = {
-        "timestamp": datetime.now().isoformat(),
-        "event_id": payload.get("id"),
-        "event_type": payload.get("type"),
-        "org_connection_id": payload["data"].get("org_connection_id"),
-        "download_link": payload["data"].get("download_link")
-    }
-    logging.info(event_data)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
