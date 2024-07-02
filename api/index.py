@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Request, Response, HTTPException
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse, FileResponse, PlainTextResponse
+from starlette.responses import JSONResponse, FileResponse, PlainTextResponse, Response
 from starlette.staticfiles import StaticFiles
 import pandas as pd
 import os
@@ -96,22 +96,15 @@ def download_log():
     else:
         return Response(content="Log file not found.", media_type="text/plain")
 
-def save_to_csv(url, org_connection_id):
+def save_to_csv(file_path, data):
     """
-    Save the URL and org_connection_id to a CSV file.
+    Save the data to a CSV file.
 
     Args:
-        url (str): The URL containing the org_connection_id.
-        org_connection_id (str): The organization connection ID.
+        file_path (str): The file path to save the CSV data.
+        data (dict): The data to save in the CSV file.
     """
-    file_path = "/tmp/org_connection_data.csv"
-    data = {
-        "timestamp": [datetime.now().isoformat()],
-        "url": [url],
-        "org_connection_id": [org_connection_id]
-    }
     df = pd.DataFrame(data)
-    
     if os.path.exists(file_path):
         df.to_csv(file_path, mode='a', header=False, index=False)
     else:
@@ -120,7 +113,7 @@ def save_to_csv(url, org_connection_id):
 @app.post("/api/webhook")
 async def webhook_listener(request: Request):
     """
-    Listen for webhook events and log them to an in-memory log.
+    Listen for webhook events and log them to an in-memory log and CSV file.
 
     Args:
         request (Request): The incoming request containing the webhook payload.
@@ -132,9 +125,6 @@ async def webhook_listener(request: Request):
     url = payload.get("data", {}).get("download_link")
     org_connection_id = payload.get("data", {}).get("org_connection_id")
 
-    # Save to CSV
-    save_to_csv(url, org_connection_id)
-
     # Log the event
     event_data = {
         "timestamp": datetime.now().isoformat(),
@@ -145,7 +135,26 @@ async def webhook_listener(request: Request):
     }
     logging.info(event_data)
 
+    # Save to CSV
+    webhook_csv_path = "/tmp/webhook_events.csv"
+    save_to_csv(webhook_csv_path, [event_data])
+
     return {"status": "success"}
+
+@app.get("/api/view-webhook-csv")
+async def view_webhook_csv():
+    """
+    Serve the CSV file containing the webhook event data.
+
+    Returns:
+        FileResponse: The CSV file if it exists.
+        PlainTextResponse: A 404 response if the CSV file is not found.
+    """
+    webhook_csv_path = "/tmp/webhook_events.csv"
+    if os.path.exists(webhook_csv_path):
+        return FileResponse(webhook_csv_path, media_type='text/csv', filename="webhook_events.csv")
+    else:
+        return PlainTextResponse("CSV file not found", status_code=404)
 
 @app.get("/api/your-endpoint")
 async def get_data(org_connection_id: str, request: Request):
@@ -160,12 +169,14 @@ async def get_data(org_connection_id: str, request: Request):
         JSONResponse: A response with a success message and the org_connection_id.
     """
     data = {
-        "message": "API call successful",
-        "org_connection_id": org_connection_id,
+        "timestamp": [datetime.now().isoformat()],
+        "url": [request.url._url],
+        "org_connection_id": [org_connection_id]
     }
     # Save data to CSV
-    save_to_csv(request.url._url, org_connection_id)
-    return JSONResponse(content=data)
+    csv_path = "/tmp/org_connection_data.csv"
+    save_to_csv(csv_path, data)
+    return JSONResponse(content={"message": "API call successful", "org_connection_id": org_connection_id})
 
 @app.post("/api/authenticate")
 async def authenticate(request: Request):
@@ -182,7 +193,7 @@ async def authenticate(request: Request):
     org_connection_id = body.get("org_connection_id")
 
     url = "https://api.connect.fastenhealth.com/v1/bridge/fhir/ehi-export"
-    payload = { "org_connection_id": org_connection_id }
+    payload = {"org_connection_id": org_connection_id}
     headers = {
         "Authorization": "Basic cHVibGljX3Rlc3RfN2Eyc3Zya3pia3l1cjRjNmplMXV3NzU0bmF6M3dneGJoNHplbGJtdTI3aHJrOnByaXZhdGVfdGVzdF9yMig3amh9aVN6NnlqcCYpb3ppciUqVnJNS0Z8P2FCKkl2IVFUZUZHVHpSamE=",
         "content-type": "application/json"
@@ -202,9 +213,9 @@ async def view_csv():
         FileResponse: The CSV file if it exists.
         PlainTextResponse: A 404 response if the CSV file is not found.
     """
-    file_path = "/tmp/org_connection_data.csv"
-    if os.path.exists(file_path):
-        return FileResponse(file_path, media_type='text/csv', filename="org_connection_data.csv")
+    csv_path = "/tmp/org_connection_data.csv"
+    if os.path.exists(csv_path):
+        return FileResponse(csv_path, media_type='text/csv', filename="org_connection_data.csv")
     else:
         return PlainTextResponse("CSV file not found", status_code=404)
 
