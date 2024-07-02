@@ -59,17 +59,11 @@ async def view_webhook_csv():
     else:
         return PlainTextResponse("CSV file not found", status_code=404)
 
-def save_to_csv(url, org_connection_id):
+def save_to_csv(file_path, data):
     """
     Save the data to a CSV file.
     """
-    file_path = "/tmp/org_connection_data.csv"
-    data = {
-        "timestamp": [datetime.now().isoformat()],
-        "url": [url],
-        "org_connection_id": [org_connection_id]
-    }
-    df = pd.DataFrame(data)
+    df = pd.DataFrame([data])
     
     if os.path.exists(file_path):
         df.to_csv(file_path, mode='a', header=False, index=False)
@@ -85,9 +79,6 @@ async def webhook_listener(request: Request):
     url = payload.get("data", {}).get("download_link")
     org_connection_id = payload.get("data", {}).get("org_connection_id")
 
-    # Save to CSV
-    save_to_csv(url, org_connection_id)
-
     # Log the event
     event_data = {
         "timestamp": datetime.now().isoformat(),
@@ -99,7 +90,7 @@ async def webhook_listener(request: Request):
     logging.info(event_data)
 
     # Save to CSV
-    save_to_csv(WEBHOOK_CSV_PATH, [event_data])
+    save_to_csv(WEBHOOK_CSV_PATH, event_data)
 
     # Notify WebSocket clients
     for client in websocket_clients:
@@ -117,7 +108,11 @@ async def get_data(org_connection_id: str, request: Request):
         "org_connection_id": org_connection_id,
     }
     # Save data to CSV
-    save_to_csv(request.url._url, org_connection_id)
+    save_to_csv("/tmp/org_connection_data.csv", {
+        "timestamp": datetime.now().isoformat(),
+        "url": request.url._url,
+        "org_connection_id": org_connection_id
+    })
     return JSONResponse(content=data)
 
 @app.post("/api/authenticate")
